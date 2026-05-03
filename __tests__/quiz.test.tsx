@@ -44,7 +44,9 @@ describe('Quiz Page & Components', () => {
     const onAnswerMock = jest.fn();
     render(<QuizCard question={mockQuestion} selectedAnswer={undefined} onAnswer={onAnswerMock} />);
     
-    fireEvent.click(screen.getByLabelText('Option: A'));
+    // Updated to match accessibility optimized labels
+    const optionA = screen.getByLabelText(/Option 1: A/i);
+    fireEvent.click(optionA);
     expect(onAnswerMock).toHaveBeenCalledWith('A');
   });
 
@@ -56,11 +58,11 @@ describe('Quiz Page & Components', () => {
 
   it('15. Next Question button appears after answering', () => {
     render(<QuizPage />);
-    // The first question usually has 'Voting' or similar. 
-    // We'll search for any option button and click it.
-    const optionButtons = screen.getAllByRole('button', { name: /Option:/ });
+    // The first question options are retrieved using the accessible radio role
+    const optionButtons = screen.getAllByRole('radio', { name: /Option \d+:/ });
     fireEvent.click(optionButtons[0]);
     
-    expect(screen.getByText(/Next Question|Finish Quiz/)).toBeInTheDocument();
+    // The next button text is still present even with aria-label
+    expect(screen.getByText(/Next Question|Finish Quiz/i)).toBeInTheDocument();
   });
 });

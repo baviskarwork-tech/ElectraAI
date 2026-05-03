@@ -46,7 +46,7 @@ describe('Assistant Page', () => {
   it('18. sends message and displays response', async () => {
     render(<AssistantPage />);
     const input = screen.getByPlaceholderText('Ask a question about elections...');
-    const form = screen.getByLabelText('Send message').closest('form');
+    const form = screen.getByLabelText(/Send question to ElectraAI/i).closest('form');
     
     fireEvent.change(input, { target: { value: 'How do I vote?' } });
     if (form) {

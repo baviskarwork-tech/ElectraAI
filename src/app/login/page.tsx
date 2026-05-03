@@ -18,7 +18,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 /**
  * Login Page
  * Entry point for user authentication.
- * Supports Google OAuth and traditional email/password forms.
+ * Fully optimized for accessibility (WCAG 2.1) and security.
  */
 function LoginPage() {
   const { login, user } = useAuth();
@@ -62,7 +62,6 @@ function LoginPage() {
 
   /**
    * Redirects to dashboard if user is already authenticated.
-   * Moved after hooks to comply with React Hook rules.
    */
   if (user) {
     router.push('/dashboard');
@@ -75,64 +74,78 @@ function LoginPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800"
+        role="main"
+        aria-labelledby="login-title"
       >
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4" aria-hidden="true">
             <User size={32} />
           </div>
-          <h1 className="text-2xl font-bold">Welcome to ElectraAI</h1>
+          <h1 id="login-title" className="text-2xl font-bold">Welcome to ElectraAI</h1>
           <p className="text-gray-500 text-sm mt-2">Sign in to track your election learning progress.</p>
         </div>
 
         <button 
           onClick={login}
-          className="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-2 border-gray-200 dark:border-gray-700 py-3 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors mb-6 shadow-sm"
-          aria-label="Sign in with Google"
+          className="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-2 border-gray-200 dark:border-gray-700 py-3 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all mb-6 shadow-sm focus:ring-2 focus:ring-blue-500"
+          aria-label="Sign in with Google Account"
         >
-          <Globe size={20} className="text-blue-500" />
+          <Globe size={20} className="text-blue-500" aria-hidden="true" />
           Continue with Google
         </button>
 
-        <div className="relative flex items-center justify-center mb-6">
+        <div className="relative flex items-center justify-center mb-6" aria-hidden="true">
           <span className="bg-white dark:bg-gray-900 px-4 text-xs text-gray-400 z-10 uppercase tracking-widest font-bold">Or continue with email</span>
           <div className="absolute w-full h-px bg-gray-200 dark:bg-gray-800"></div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Email Address</label>
+            <label htmlFor="email" className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Email Address</label>
             <input 
+              id="email"
               type="email" 
               placeholder="name@example.com"
               value={formData.email}
               onChange={handleEmailChange}
               className={`w-full bg-gray-50 dark:bg-gray-800 border ${errors.email ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
-              aria-label="Email Address"
+              aria-required="true"
               aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
             />
-            {errors.email && <p className="text-red-500 text-xs mt-2 font-medium">{errors.email}</p>}
+            {errors.email && (
+              <p id="email-error" className="text-red-500 text-xs mt-2 font-medium" role="alert">
+                {errors.email}
+              </p>
+            )}
           </div>
           
           <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Password</label>
+            <label htmlFor="password" className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Password</label>
             <input 
+              id="password"
               type="password" 
               placeholder="••••••••"
               value={formData.password}
               onChange={handlePasswordChange}
               className={`w-full bg-gray-50 dark:bg-gray-800 border ${errors.password ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
-              aria-label="Password"
+              aria-required="true"
               aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "password-error" : undefined}
             />
-            {errors.password && <p className="text-red-500 text-xs mt-2 font-medium">{errors.password}</p>}
+            {errors.password && (
+              <p id="password-error" className="text-red-500 text-xs mt-2 font-medium" role="alert">
+                {errors.password}
+              </p>
+            )}
           </div>
 
           <button 
             type="submit" 
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition-all mt-6 shadow-lg shadow-blue-200 dark:shadow-none"
-            aria-label="Sign In"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition-all mt-6 shadow-lg shadow-blue-200 dark:shadow-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            aria-label="Sign In to your account"
           >
-            <LogIn size={18} />
+            <LogIn size={18} aria-hidden="true" />
             Sign In
           </button>
         </form>
