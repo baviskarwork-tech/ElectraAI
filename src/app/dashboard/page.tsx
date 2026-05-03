@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { Activity, Award, BookOpen } from 'lucide-react';
+import { Activity, Award, BookOpen, Loader2 } from 'lucide-react';
 import { getUserProgress, saveUserProgress } from '@/lib/google-services';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for Maps component to optimize performance
+const GoogleMap = dynamic(() => import('@/components/GoogleMap'), {
+  ssr: false,
+  loading: () => <div className="w-full h-96 bg-gray-100 animate-pulse rounded-2xl flex items-center justify-center">Loading Maps...</div>
+});
 
 interface ProgressData {
   completedSteps?: number;
@@ -12,6 +19,11 @@ interface ProgressData {
   lastActive?: string;
 }
 
+/**
+ * Dashboard Page
+ * Provides a personalized overview of the user's election education progress.
+ * Integrates Firebase for real-time sync and Google Maps for polling station location.
+ */
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -23,6 +35,7 @@ export default function DashboardPage() {
     }
     
     if (user) {
+      // Fetches user-specific progress from Firestore
       getUserProgress(user.uid).then(data => {
         setProgress((data as ProgressData) || { completedSteps: 5, score: 85 });
         saveUserProgress(user.uid, { lastActive: new Date().toISOString() });
@@ -30,7 +43,39 @@ export default function DashboardPage() {
     }
   }, [user, loading, router]);
 
-  if (loading || !user) return <div className="p-8 text-center">Loading...</div>;
+  // Memoized stats to prevent unnecessary re-calculations (Performance Patch 2)
+  const stats = useMemo(() => {
+    return [
+      { 
+        label: 'Modules Completed', 
+        value: `${progress?.completedSteps ?? 0} / 5`, 
+        icon: BookOpen, 
+        color: 'blue' 
+      },
+      { 
+        label: 'Quiz Average', 
+        value: `${progress?.score ?? 0}%`, 
+        icon: Award, 
+        color: 'purple' 
+      },
+      { 
+        label: 'Current Status', 
+        value: 'Active Learner', 
+        icon: Activity, 
+        color: 'orange' 
+      }
+    ];
+  }, [progress]);
+
+  // Loading skeleton for smooth user experience (Performance Patch 3)
+  if (loading || !user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+        <p className="text-gray-500 font-medium">Syncing with Firebase...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto py-8">
@@ -43,46 +88,21 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6 mb-12">
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-          <div className="p-4 bg-blue-100 text-blue-600 rounded-xl dark:bg-blue-900/50 dark:text-blue-400"><BookOpen size={24} /></div>
-          <div>
-            <p className="text-sm text-gray-500">Modules Completed</p>
-            <p className="text-2xl font-bold">{progress?.completedSteps ?? 0} / 5</p>
+        {stats.map((stat, i) => (
+          <div key={i} className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
+            <div className={`p-4 bg-${stat.color}-100 text-${stat.color}-600 rounded-xl dark:bg-${stat.color}-900/50 dark:text-${stat.color}-400`}>
+              <stat.icon size={24} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">{stat.label}</p>
+              <p className="text-2xl font-bold">{stat.value}</p>
+            </div>
           </div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-          <div className="p-4 bg-purple-100 text-purple-600 rounded-xl dark:bg-purple-900/50 dark:text-purple-400"><Award size={24} /></div>
-          <div>
-            <p className="text-sm text-gray-500">Quiz Average</p>
-            <p className="text-2xl font-bold">{progress?.score ?? 0}%</p>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
-          <div className="p-4 bg-orange-100 text-orange-600 rounded-xl dark:bg-orange-900/50 dark:text-orange-400"><Activity size={24} /></div>
-          <div>
-            <p className="text-sm text-gray-500">Current Status</p>
-            <p className="text-xl font-bold">Active Learner</p>
-          </div>
-        </div>
+        ))}
       </div>
 
       <h2 className="text-2xl font-bold mb-6">Local Polling Stations</h2>
-      <div className="w-full h-96 rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-800 relative bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-        <iframe
-          width="100%"
-          height="100%"
-          style={{ border: 0 }}
-          loading="lazy"
-          allowFullScreen
-          referrerPolicy="no-referrer-when-downgrade"
-          src="https://www.google.com/maps/embed/v1/search?q=polling+stations+near+me&key=MOCK_API_KEY_WILL_NOT_RENDER"
-          className="absolute inset-0 z-0 opacity-50"
-        />
-        <div className="z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur p-6 rounded-xl text-center max-w-md border border-gray-200 dark:border-gray-700 shadow-xl">
-          <p className="font-semibold text-lg mb-2">Google Maps SDK Integrated</p>
-          <p className="text-sm text-gray-600 dark:text-gray-300">Provides live routing to local voting centers. (Requires valid API Key to render map fully).</p>
-        </div>
-      </div>
+      <GoogleMap />
     </div>
   );
 }

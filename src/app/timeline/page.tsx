@@ -2,9 +2,25 @@
 
 import { useElectionData } from '@/hooks/useElectionData';
 import TimelineCard from '@/components/TimelineCard';
+import { Loader2 } from 'lucide-react';
 
+/**
+ * Timeline Page
+ * Renders an interactive, step-by-step timeline of the election process.
+ * Features animated cards and progress tracking.
+ */
 export default function TimelinePage() {
   const { timeline, currentStepIndex, setCurrentStep } = useElectionData();
+
+  // Loading skeleton (Performance Patch 3)
+  if (!timeline || timeline.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+        <p className="text-gray-500 font-medium">Loading election roadmap...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto py-8">

@@ -1,6 +1,15 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AssistantPage from '@/app/assistant/page';
 
+// Mock next/dynamic to render synchronously in tests
+jest.mock('next/dynamic', () => ({
+  __esModule: true,
+  default: () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('@/components/AssistantChat').default;
+  },
+}));
+
 jest.mock('framer-motion', () => ({
   motion: {
     div: ({ children, className }: { children: React.ReactNode, className?: string }) => <div className={className}>{children}</div>,

@@ -56,4 +56,15 @@ describe('Gemini API Route', () => {
     const data = await res.json();
     expect(data.text).toMatch(/demo fallback response/);
   });
+
+  it('38. handles empty assistant input safely (Edge Case)', async () => {
+    const req = {
+      json: () => Promise.resolve({}),
+    } as unknown as Request;
+    
+    const res = await POST(req) as unknown as MockResponse;
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toMatch(/Invalid prompt/);
+  });
 });
