@@ -2,8 +2,25 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getGeminiModel } from '@/lib/google-services';
 
+/**
+ * Validation Constraints
+ */
+const MIN_PROMPT_LENGTH = 2;
+const MAX_PROMPT_LENGTH = 1000;
+
+/**
+ * HTTP Status Codes
+ */
+const STATUS_BAD_REQUEST = 400;
+const STATUS_INTERNAL_ERROR = 500;
+
+/**
+ * Gemini AI Configuration
+ */
+const SYSTEM_CONTEXT = "You are ElectraAI, an Election Process Assistant. You help users understand the election process, timelines, roles, and steps in a highly interactive and intuitive way. Always provide clear, educational, and unbiased answers about elections.";
+
 const promptSchema = z.object({
-  prompt: z.string().min(2).max(1000),
+  prompt: z.string().min(MIN_PROMPT_LENGTH).max(MAX_PROMPT_LENGTH),
 });
 
 /**
@@ -12,17 +29,18 @@ const promptSchema = z.object({
  * Implements strict input validation, security headers, and production-safe logging.
  * 
  * @param req The incoming HTTP request containing the prompt
+ * @returns JSON response with AI text or error message
  */
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<NextResponse> {
   try {
-    const body = await req.json();
+    const body = await req.json() as Record<string, unknown>;
     const result_val = promptSchema.safeParse(body);
 
     if (!result_val.success) {
       return NextResponse.json(
-        { error: 'Invalid prompt. Must be between 2 and 1000 characters.' }, 
+        { error: `Invalid prompt. Must be between ${MIN_PROMPT_LENGTH} and ${MAX_PROMPT_LENGTH} characters.` }, 
         { 
-          status: 400,
+          status: STATUS_BAD_REQUEST,
           headers: { 'Cache-Control': 'no-store' }
         }
       );
@@ -30,8 +48,11 @@ export async function POST(req: Request) {
 
     const { prompt } = result_val.data;
 
+    // Check for API key presence
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey || apiKey === 'demo' || apiKey === 'mock-gemini-key') {
+    const isDemo = !apiKey || apiKey === 'demo' || apiKey === 'mock-gemini-key';
+
+    if (isDemo) {
       return NextResponse.json({ 
         text: "This is a demo fallback response from ElectraAI. To enable real AI answers, please provide a valid GEMINI_API_KEY in the environment variables." 
       }, {
@@ -40,11 +61,7 @@ export async function POST(req: Request) {
     }
 
     const model = getGeminiModel();
-    
-    // System context to ensure model focus on election education
-    const systemContext = "You are ElectraAI, an Election Process Assistant. You help users understand the election process, timelines, roles, and steps in a highly interactive and intuitive way. Always provide clear, educational, and unbiased answers about elections.";
-    
-    const finalPrompt = `${systemContext}\n\nUser Question: ${prompt}`;
+    const finalPrompt = `${SYSTEM_CONTEXT}\n\nUser Question: ${prompt}`;
     
     const result = await model.generateContent(finalPrompt);
     const response = await result.response;
@@ -65,7 +82,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ 
       text: "I'm having trouble connecting to Google Gemini AI right now. Please make sure the GEMINI_API_KEY environment variable is set." 
     }, {
-      status: 500,
+      status: STATUS_INTERNAL_ERROR,
       headers: { 'Cache-Control': 'no-store' }
     });
   }

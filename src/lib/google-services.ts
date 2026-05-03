@@ -1,9 +1,12 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, Auth } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, Firestore } from 'firebase/firestore';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Firebase configuration (using mock fallback if env vars missing to prevent build errors)
+/**
+ * Firebase Configuration
+ * Utilizes environment variables with safe fallbacks for build-time stability.
+ */
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "mock-api-key",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "mock-auth-domain.firebaseapp.com",
@@ -13,27 +16,43 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:1234567890:web:mockappid",
 };
 
-// Initialize Firebase App securely (singleton pattern)
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+/**
+ * Singleton Firebase Instance
+ */
+const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Initialize Firebase services
-const auth = getAuth(app);
-const db = getFirestore(app);
+/**
+ * Shared Service Instances
+ */
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
-// Example Firestore implementation for saving user progress
-export async function saveUserProgress(userId: string, data: Record<string, unknown>) {
+/**
+ * Saves user-specific progress to Firestore.
+ * @param userId The unique identifier for the user
+ * @param data The progress data to persist
+ * @returns Promise resolving to a boolean indicating success
+ */
+export async function saveUserProgress(userId: string, data: Record<string, unknown>): Promise<boolean> {
   try {
     const userRef = doc(db, 'users', userId);
     await setDoc(userRef, data, { merge: true });
     return true;
   } catch (error) {
-    console.warn("Firestore save failed, falling back gracefully", error);
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn("Firestore save failed, falling back gracefully", error);
+    }
     return false;
   }
 }
 
-export async function getUserProgress(userId: string) {
+/**
+ * Retrieves user-specific progress from Firestore.
+ * @param userId The unique identifier for the user
+ * @returns Promise resolving to the user data or null if not found
+ */
+export async function getUserProgress(userId: string): Promise<Record<string, unknown> | null> {
   try {
     const userRef = doc(db, 'users', userId);
     const snap = await getDoc(userRef);
@@ -42,16 +61,23 @@ export async function getUserProgress(userId: string) {
     }
     return null;
   } catch (error) {
-    console.warn("Firestore fetch failed, falling back gracefully", error);
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn("Firestore fetch failed, falling back gracefully", error);
+    }
     return null;
   }
 }
 
-// Initialize Gemini API Client
+/**
+ * Singleton Gemini AI Client
+ */
 const geminiApiKey = process.env.GEMINI_API_KEY || "mock-gemini-key";
 const genAI = new GoogleGenerativeAI(geminiApiKey);
 
-// Server-side/route handler helper for Gemini
+/**
+ * Factory for Gemini AI models.
+ * @returns The initialized generative model instance
+ */
 export function getGeminiModel() {
   return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 }

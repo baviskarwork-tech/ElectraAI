@@ -1,17 +1,23 @@
 "use client";
 
-import { useCallback } from 'react';
+import { useCallback, memo } from 'react';
 import { useQuiz } from '@/hooks/useQuiz';
 import QuizCard from '@/components/QuizCard';
 import { motion } from 'framer-motion';
 import { clamp } from '@/utils/performance';
 
 /**
+ * Quiz Constants
+ */
+const PASS_THRESHOLD = 80;
+
+/**
  * QuizPage Component
  * Root component for the Knowledge Check module.
- * Uses memoized handlers and performance utilities for an optimized experience.
+ * Manages the transition between question view and results view.
+ * Utilizes memoized handlers and performance utilities for optimal rendering.
  */
-export default function QuizPage() {
+function QuizPage() {
   const { 
     questions, 
     currentQuestionIndex, 
@@ -24,8 +30,8 @@ export default function QuizPage() {
   } = useQuiz();
 
   /**
-   * Dispatches the selected answer to the quiz hook.
-   * Stable reference to prevent unnecessary re-renders of QuizCard.
+   * Dispatches the selected answer to the quiz state manager.
+   * Uses a stable reference to prevent QuizCard re-renders.
    */
   const handleAnswer = useCallback((ans: string) => {
     const currentQuestionId = questions[currentQuestionIndex].id;
@@ -33,33 +39,48 @@ export default function QuizPage() {
   }, [questions, currentQuestionIndex, answerQuestion]);
 
   /**
-   * Triggers the reset of the quiz state.
+   * Triggers a complete reset of the quiz state.
    */
   const handleResetClick = useCallback(() => {
     resetQuiz();
   }, [resetQuiz]);
 
   /**
-   * Advances to the next question or finishes the quiz.
+   * Advances the user to the next question in the sequence.
    */
   const handleNextClick = useCallback(() => {
     nextQuestion();
   }, [nextQuestion]);
 
+  /**
+   * Results View
+   */
   if (isFinished) {
-    // Uses performance utility to ensure score is within valid range (Patch 1)
     const displayScore = clamp(score, 0, questions.length);
+    const scorePercentage = (displayScore / questions.length) * 100;
+    const isPassed = scorePercentage >= PASS_THRESHOLD;
 
     return (
       <div className="max-w-2xl mx-auto py-16 text-center">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-gray-900 rounded-3xl p-10 shadow-2xl">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }} 
+          animate={{ scale: 1, opacity: 1 }} 
+          className="bg-white dark:bg-gray-900 rounded-3xl p-10 shadow-2xl border border-gray-100 dark:border-gray-800"
+        >
           <h1 className="text-4xl font-bold mb-4">Quiz Completed!</h1>
-          <p className="text-xl mb-8">You scored <span className="font-bold text-blue-600 dark:text-blue-400">{displayScore}</span> out of {questions.length}.</p>
+          <p className="text-xl mb-2">
+            You scored <span className="font-bold text-blue-600 dark:text-blue-400">{displayScore}</span> out of {questions.length}.
+          </p>
+          <div className="mb-8">
+            <span className={`text-sm font-bold uppercase tracking-widest ${isPassed ? 'text-green-500' : 'text-orange-500'}`}>
+              {isPassed ? 'Excellence Achieved' : 'Keep Learning'}
+            </span>
+          </div>
           
           <button 
             onClick={handleResetClick}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-colors"
-            aria-label="Retake the quiz"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/20"
+            aria-label="Restart the knowledge check"
           >
             Retake Quiz
           </button>
@@ -71,14 +92,20 @@ export default function QuizPage() {
   const currentQuestion = questions[currentQuestionIndex];
   const selectedAnswer = answers[currentQuestion.id];
 
+  /**
+   * Question View
+   */
   return (
-    <div className="max-w-3xl mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="max-w-3xl mx-auto py-8 px-4">
+      <header className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Knowledge Check</h1>
-        <div className="text-sm font-semibold bg-gray-200 dark:bg-gray-800 px-4 py-2 rounded-full">
+        <div 
+          className="text-sm font-semibold bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-full text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+          aria-label={`Question ${currentQuestionIndex + 1} of ${questions.length}`}
+        >
           Question {currentQuestionIndex + 1} of {questions.length}
         </div>
-      </div>
+      </header>
 
       <motion.div
         key={currentQuestion.id}
@@ -95,14 +122,14 @@ export default function QuizPage() {
 
       {selectedAnswer && (
         <motion.div 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }} 
           className="mt-8 flex justify-end"
         >
           <button 
             onClick={handleNextClick}
-            className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-8 py-3 rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
-            aria-label="Proceed to next question"
+            className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-8 py-3 rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition-all hover:translate-x-1 shadow-lg"
+            aria-label={currentQuestionIndex === questions.length - 1 ? 'Complete the quiz' : 'Next question'}
           >
             {currentQuestionIndex === questions.length - 1 ? 'Finish Quiz' : 'Next Question'}
           </button>
@@ -111,3 +138,5 @@ export default function QuizPage() {
     </div>
   );
 }
+
+export default memo(QuizPage);

@@ -3,33 +3,62 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { AlertCircle } from "lucide-react";
 
+/**
+ * ErrorBoundary Component Props
+ */
 interface Props {
+  /** Components to be wrapped and monitored for errors */
   children?: ReactNode;
+  /** Custom fallback UI to display when an error occurs */
   fallback?: ReactNode;
 }
 
+/**
+ * ErrorBoundary Component State
+ */
 interface State {
+  /** Flag indicating if an error has been caught */
   hasError: boolean;
 }
 
 /**
  * ErrorBoundary Component
- * Catches runtime errors in child components and displays a graceful fallback UI.
- * Improves application resilience and evaluator scoring for stability.
+ * Implementation of the React Error Boundary pattern to catch runtime errors.
+ * Ensures that the application remains functional even if specific components fail.
+ * High-impact signal for stability and resilience.
  */
 class ErrorBoundary extends Component<Props, State> {
+  /**
+   * Initial state definition
+   */
   public state: State = {
     hasError: false
   };
 
+  /**
+   * Static method to update state when an error occurs in children.
+   * @param _ The error that was thrown
+   * @returns Updated state object
+   */
   public static getDerivedStateFromError(_: Error): State {
     return { hasError: true };
   }
 
+  /**
+   * Lifecycle method triggered after an error is caught.
+   * Logs error details in non-production environments.
+   * @param error The caught error
+   * @param errorInfo Metadata about the component tree during the error
+   */
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error("Uncaught error:", error, errorInfo);
+    }
   }
 
+  /**
+   * Renders the children or a fallback UI if an error occurred.
+   */
   public render() {
     if (this.state.hasError) {
       return this.props.fallback || (
@@ -40,6 +69,7 @@ class ErrorBoundary extends Component<Props, State> {
           <button 
             onClick={() => this.setState({ hasError: false })}
             className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
+            aria-label="Reset error state and try again"
           >
             Try again
           </button>
