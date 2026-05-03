@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Activity, Award, BookOpen, Loader2 } from 'lucide-react';
 import { getUserProgress, saveUserProgress } from '@/lib/google-services';
 import dynamic from 'next/dynamic';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Dynamic import for Maps component to optimize performance
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), {
@@ -70,7 +71,7 @@ export default function DashboardPage() {
   // Loading skeleton for smooth user experience (Performance Patch 3)
   if (loading || !user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4" aria-live="polite">
         <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
         <p className="text-gray-500 font-medium">Syncing with Firebase...</p>
       </div>
@@ -79,15 +80,19 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto py-8">
-      <div className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">Welcome, {user.displayName}</h1>
-        <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-4 py-2 rounded-full text-sm font-bold border border-green-200 dark:border-green-800">
+        <div 
+          className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-4 py-2 rounded-full text-sm font-bold border border-green-200 dark:border-green-800"
+          role="status"
+          aria-label="Database synchronization status"
+        >
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Firebase Sync Active
         </div>
-      </div>
+      </header>
 
-      <div className="grid md:grid-cols-3 gap-6 mb-12">
+      <section className="grid md:grid-cols-3 gap-6 mb-12" aria-label="Learning Statistics">
         {stats.map((stat, i) => (
           <div key={i} className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
             <div className={`p-4 bg-${stat.color}-100 text-${stat.color}-600 rounded-xl dark:bg-${stat.color}-900/50 dark:text-${stat.color}-400`}>
@@ -99,10 +104,14 @@ export default function DashboardPage() {
             </div>
           </div>
         ))}
-      </div>
+      </section>
 
-      <h2 className="text-2xl font-bold mb-6">Local Polling Stations</h2>
-      <GoogleMap />
+      <section aria-label="Polling Stations Map">
+        <h2 className="text-2xl font-bold mb-6">Local Polling Stations</h2>
+        <ErrorBoundary fallback={<div className="p-8 text-center bg-gray-100 rounded-2xl">Maps service currently unavailable. Please check your connection.</div>}>
+          <GoogleMap />
+        </ErrorBoundary>
+      </section>
     </div>
   );
 }

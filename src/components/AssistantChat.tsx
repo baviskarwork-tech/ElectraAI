@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { useAssistant } from '@/hooks/useAssistant';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,18 +8,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 /**
  * AssistantChat Component
  * Handles the interactive chat interface with Google Gemini AI.
- * Includes message history, loading states, and smooth animations.
+ * Uses memoization and stable callbacks for high-impact performance gains.
  */
-export default function AssistantChat() {
+function AssistantChat() {
   const { messages, isLoading, sendMessage } = useAssistant();
   const [input, setInput] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Stable submit handler to improve rendering performance (Patch 3)
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     sendMessage(input);
     setInput('');
-  };
+  }, [input, isLoading, sendMessage]);
 
   return (
     <div className="max-w-4xl mx-auto h-[calc(100vh-120px)] flex flex-col py-6">
@@ -97,3 +98,5 @@ export default function AssistantChat() {
     </div>
   );
 }
+
+export default memo(AssistantChat);

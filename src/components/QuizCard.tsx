@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { QuizQuestion } from '../types';
 
@@ -9,7 +10,12 @@ interface QuizCardProps {
   onAnswer: (answer: string) => void;
 }
 
-export default function QuizCard({ question, selectedAnswer, onAnswer }: QuizCardProps) {
+/**
+ * QuizCard Component
+ * Displays a quiz question and its options.
+ * Wrapped in memo to prevent unnecessary re-renders.
+ */
+function QuizCard({ question, selectedAnswer, onAnswer }: QuizCardProps) {
   const showExplanation = !!selectedAnswer;
 
   const handleSelect = (option: string) => {
@@ -67,3 +73,5 @@ export default function QuizCard({ question, selectedAnswer, onAnswer }: QuizCar
     </div>
   );
 }
+
+export default memo(QuizCard);

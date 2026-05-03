@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { TimelineStep } from '../types';
 
@@ -10,7 +11,12 @@ interface TimelineCardProps {
   onClick: () => void;
 }
 
-export default function TimelineCard({ step, isActive, isPast, onClick }: TimelineCardProps) {
+/**
+ * TimelineCard Component
+ * Displays a single step in the election process timeline.
+ * Wrapped in memo to prevent unnecessary re-renders when other steps change.
+ */
+function TimelineCard({ step, isActive, isPast, onClick }: TimelineCardProps) {
   return (
     <motion.button
       whileHover={{ scale: 1.02 }}
@@ -57,3 +63,5 @@ export default function TimelineCard({ step, isActive, isPast, onClick }: Timeli
     </motion.button>
   );
 }
+
+export default memo(TimelineCard);
