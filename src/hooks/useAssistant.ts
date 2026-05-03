@@ -1,17 +1,21 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { Message } from '@/types';
 
-type Message = {
-  role: 'user' | 'assistant';
-  content: string;
-};
-
+/**
+ * useAssistant Hook
+ * Manages the state and communication with the Gemini AI Assistant.
+ */
 export function useAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: "Hello! I'm ElectraAI. How can I help you understand the election process today?" }
   ]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const sendMessage = async (prompt: string) => {
+  /**
+   * Sends a message to the Gemini API and updates the local chat history.
+   * @param prompt The user's question or message
+   */
+  const sendMessage = useCallback(async (prompt: string): Promise<void> => {
     if (!prompt.trim()) return;
 
     const userMessage: Message = { role: 'user', content: prompt };
@@ -25,7 +29,7 @@ export function useAssistant() {
         body: JSON.stringify({ prompt }),
       });
       
-      const data = await res.json();
+      const data = await res.json() as { text?: string };
       
       const assistantMessage: Message = { 
         role: 'assistant', 
@@ -37,7 +41,7 @@ export function useAssistant() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   return { messages, isLoading, sendMessage };
 }

@@ -1,11 +1,24 @@
 "use client";
 
+import { useCallback, memo } from 'react';
 import Link from 'next/link';
-import { useAuth } from '../hooks/useAuth';
 import { LogOut, User } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
-export default function Navbar() {
+/**
+ * Navbar Component
+ * Main navigation bar for the ElectraAI platform.
+ * Provides access to core modules and user authentication state.
+ */
+function Navbar() {
   const { user, loading, logout } = useAuth();
+
+  /**
+   * Handles user logout with stable reference.
+   */
+  const handleLogoutClick = useCallback(() => {
+    logout();
+  }, [logout]);
 
   return (
     <nav className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
@@ -30,7 +43,7 @@ export default function Navbar() {
               {user.displayName || "Dashboard"}
             </Link>
             <button 
-              onClick={logout}
+              onClick={handleLogoutClick}
               aria-label="Logout"
               className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
             >
@@ -47,3 +60,5 @@ export default function Navbar() {
     </nav>
   );
 }
+
+export default memo(Navbar);

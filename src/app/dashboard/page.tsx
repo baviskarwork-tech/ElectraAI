@@ -7,6 +7,12 @@ import { Activity, Award, BookOpen, Loader2 } from 'lucide-react';
 import { getUserProgress, saveUserProgress } from '@/lib/google-services';
 import dynamic from 'next/dynamic';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { formatPercentage } from '@/utils/common';
+
+// Global constants for standardized logic (Step 5)
+const MODULES_TOTAL = 5;
+const DEFAULT_STEPS = 5;
+const DEFAULT_SCORE = 85;
 
 // Dynamic import for Maps component to optimize performance
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), {
@@ -30,6 +36,9 @@ export default function DashboardPage() {
   const router = useRouter();
   const [progress, setProgress] = useState<ProgressData | null>(null);
 
+  /**
+   * Orchestrates authentication check and data fetching.
+   */
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
@@ -38,7 +47,10 @@ export default function DashboardPage() {
     if (user) {
       // Fetches user-specific progress from Firestore
       getUserProgress(user.uid).then(data => {
-        setProgress((data as ProgressData) || { completedSteps: 5, score: 85 });
+        setProgress((data as ProgressData) || { 
+          completedSteps: DEFAULT_STEPS, 
+          score: DEFAULT_SCORE 
+        });
         saveUserProgress(user.uid, { lastActive: new Date().toISOString() });
       });
     }
@@ -49,13 +61,14 @@ export default function DashboardPage() {
     return [
       { 
         label: 'Modules Completed', 
-        value: `${progress?.completedSteps ?? 0} / 5`, 
+        value: `${progress?.completedSteps ?? 0} / ${MODULES_TOTAL}`, 
         icon: BookOpen, 
         color: 'blue' 
       },
       { 
         label: 'Quiz Average', 
-        value: `${progress?.score ?? 0}%`, 
+        // Using common utility for standardized formatting (Step 1)
+        value: formatPercentage(progress?.score ?? 0, 100), 
         icon: Award, 
         color: 'purple' 
       },

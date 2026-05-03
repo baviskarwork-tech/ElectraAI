@@ -23,11 +23,28 @@ export default function QuizPage() {
     resetQuiz 
   } = useQuiz();
 
-  // Stable handler for quiz selections (Patch 3)
+  /**
+   * Dispatches the selected answer to the quiz hook.
+   * Stable reference to prevent unnecessary re-renders of QuizCard.
+   */
   const handleAnswer = useCallback((ans: string) => {
     const currentQuestionId = questions[currentQuestionIndex].id;
     answerQuestion(currentQuestionId, ans);
   }, [questions, currentQuestionIndex, answerQuestion]);
+
+  /**
+   * Triggers the reset of the quiz state.
+   */
+  const handleResetClick = useCallback(() => {
+    resetQuiz();
+  }, [resetQuiz]);
+
+  /**
+   * Advances to the next question or finishes the quiz.
+   */
+  const handleNextClick = useCallback(() => {
+    nextQuestion();
+  }, [nextQuestion]);
 
   if (isFinished) {
     // Uses performance utility to ensure score is within valid range (Patch 1)
@@ -40,7 +57,7 @@ export default function QuizPage() {
           <p className="text-xl mb-8">You scored <span className="font-bold text-blue-600 dark:text-blue-400">{displayScore}</span> out of {questions.length}.</p>
           
           <button 
-            onClick={resetQuiz}
+            onClick={handleResetClick}
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-colors"
             aria-label="Retake the quiz"
           >
@@ -83,7 +100,7 @@ export default function QuizPage() {
           className="mt-8 flex justify-end"
         >
           <button 
-            onClick={nextQuestion}
+            onClick={handleNextClick}
             className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-8 py-3 rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
             aria-label="Proceed to next question"
           >

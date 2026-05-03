@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { z } from 'zod';
+import { useState, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
+import { z } from 'zod';
 import { User, LogIn, Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
 
+// Validation Schema for Login
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z.string().min(8, { message: "Password must be at least 8 characters long" })
@@ -14,18 +15,21 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+/**
+ * Login Page
+ * Entry point for user authentication.
+ * Supports Google OAuth and traditional email/password forms.
+ */
+function LoginPage() {
   const { login, user } = useAuth();
   const router = useRouter();
   const [formData, setFormData] = useState<LoginFormData>({ email: '', password: '' });
   const [errors, setErrors] = useState<Partial<Record<keyof LoginFormData, string>>>({});
 
-  if (user) {
-    router.push('/dashboard');
-    return null;
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
+  /**
+   * Handles the submission of the email login form.
+   */
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     const result = loginSchema.safeParse(formData);
     
@@ -40,7 +44,30 @@ export default function LoginPage() {
       // Simulated Email Login for demo
       alert("Traditional login submitted! In production, this uses Firebase Auth.");
     }
-  };
+  }, [formData]);
+
+  /**
+   * Handles the email input change.
+   */
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, email: e.target.value }));
+  }, []);
+
+  /**
+   * Handles the password input change.
+   */
+  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, password: e.target.value }));
+  }, []);
+
+  /**
+   * Redirects to dashboard if user is already authenticated.
+   * Moved after hooks to comply with React Hook rules.
+   */
+  if (user) {
+    router.push('/dashboard');
+    return null;
+  }
 
   return (
     <div className="max-w-md mx-auto py-16 px-4">
@@ -78,7 +105,7 @@ export default function LoginPage() {
               type="email" 
               placeholder="name@example.com"
               value={formData.email}
-              onChange={e => setFormData({...formData, email: e.target.value})}
+              onChange={handleEmailChange}
               className={`w-full bg-gray-50 dark:bg-gray-800 border ${errors.email ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
               aria-label="Email Address"
               aria-invalid={!!errors.email}
@@ -92,7 +119,7 @@ export default function LoginPage() {
               type="password" 
               placeholder="••••••••"
               value={formData.password}
-              onChange={e => setFormData({...formData, password: e.target.value})}
+              onChange={handlePasswordChange}
               className={`w-full bg-gray-50 dark:bg-gray-800 border ${errors.password ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
               aria-label="Password"
               aria-invalid={!!errors.password}
@@ -113,3 +140,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default memo(LoginPage);
