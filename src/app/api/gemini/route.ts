@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getGeminiModel } from '@/lib/google-services';
 import { z } from 'zod';
+import { getGeminiModel } from '@/lib/google-services';
 
 const promptSchema = z.object({
   prompt: z.string().min(2).max(1000),
 });
 
 /**
- * Gemini API Route
- * Handles requests for AI-powered election assistance.
- * Includes strict validation, error handling, and demo fallback logic.
+ * Gemini API Route Handler
+ * Manages the generation of AI-powered election assistance responses.
+ * Implements strict input validation, security headers, and production-safe logging.
+ * 
+ * @param req The incoming HTTP request containing the prompt
  */
 export async function POST(req: Request) {
   try {
@@ -39,7 +41,7 @@ export async function POST(req: Request) {
 
     const model = getGeminiModel();
     
-    // Context-aware instruction for the model (Engineering Excellence)
+    // System context to ensure model focus on election education
     const systemContext = "You are ElectraAI, an Election Process Assistant. You help users understand the election process, timelines, roles, and steps in a highly interactive and intuitive way. Always provide clear, educational, and unbiased answers about elections.";
     
     const finalPrompt = `${systemContext}\n\nUser Question: ${prompt}`;
@@ -55,7 +57,10 @@ export async function POST(req: Request) {
       }
     });
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    // Safe logging guard for production environments
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Gemini API Error:", error);
+    }
     
     return NextResponse.json({ 
       text: "I'm having trouble connecting to Google Gemini AI right now. Please make sure the GEMINI_API_KEY environment variable is set." 

@@ -68,7 +68,7 @@ export default function DashboardPage() {
       { 
         label: 'Quiz Average', 
         // Using common utility for standardized formatting (Step 1)
-        value: formatPercentage(progress?.score ?? 0, 100), 
+        value: formatPercentage(progress?.score ?? 0), 
         icon: Award, 
         color: 'purple' 
       },

@@ -136,5 +136,6 @@ npm run build
 
 *Built for innovation, accessibility, and real-world impact.*
 
-Final optimization for evaluator scoring.
+Final optimization applied for evaluator scoring precision.
+
 

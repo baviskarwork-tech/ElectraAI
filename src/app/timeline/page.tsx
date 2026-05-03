@@ -1,21 +1,29 @@
 "use client";
 
+import { useCallback, memo } from 'react';
 import { useElectionData } from '@/hooks/useElectionData';
 import TimelineCard from '@/components/TimelineCard';
 import { Loader2 } from 'lucide-react';
 
 /**
- * Timeline Page
+ * TimelinePage Component
  * Renders an interactive, step-by-step timeline of the election process.
- * Features animated cards and progress tracking.
+ * Uses stable callbacks and memoized sub-components for optimized performance.
  */
-export default function TimelinePage() {
+function TimelinePage() {
   const { timeline, currentStepIndex, setCurrentStep } = useElectionData();
+
+  /**
+   * Handles selecting a timeline step with a stable reference.
+   */
+  const handleStepClick = useCallback((index: number) => {
+    setCurrentStep(index);
+  }, [setCurrentStep]);
 
   // Loading skeleton (Performance Patch 3)
   if (!timeline || timeline.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4" aria-live="polite">
         <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
         <p className="text-gray-500 font-medium">Loading election roadmap...</p>
       </div>
@@ -43,7 +51,7 @@ export default function TimelinePage() {
                 step={step} 
                 isActive={currentStepIndex === index}
                 isPast={index < currentStepIndex}
-                onClick={() => setCurrentStep(index)}
+                onClick={() => handleStepClick(index)}
               />
             </div>
           </div>
@@ -52,3 +60,5 @@ export default function TimelinePage() {
     </div>
   );
 }
+
+export default memo(TimelinePage);
