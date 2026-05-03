@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { auth, googleProvider, signInWithPopup, signOut } from '../lib/google-services';
-import { User, onAuthStateChanged } from 'firebase/auth';
+import { auth, signInWithPopup, googleProvider, signOut } from '@/lib/google-services';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import Cookies from 'js-cookie';
 
 export function useAuth() {
@@ -11,8 +11,7 @@ export function useAuth() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        // Set cookie for simple admin guard verification
-        Cookies.set('admin_session', 'true', { expires: 1 });
+        Cookies.set('admin_session', 'true', { expires: 1, secure: true, sameSite: 'strict' });
       } else {
         Cookies.remove('admin_session');
       }
@@ -22,22 +21,21 @@ export function useAuth() {
     return () => unsubscribe();
   }, []);
 
-  const loginWithGoogle = async () => {
+  const login = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
-      console.error("Login failed", error);
+      console.error("Login failed:", error);
     }
   };
 
   const logout = async () => {
     try {
       await signOut(auth);
-      Cookies.remove('admin_session');
     } catch (error) {
-      console.error("Logout failed", error);
+      console.error("Logout failed:", error);
     }
   };
 
-  return { user, loading, loginWithGoogle, logout };
+  return { user, loading, login, logout };
 }

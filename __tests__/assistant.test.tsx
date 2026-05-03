@@ -5,6 +5,7 @@ jest.mock('framer-motion', () => ({
   motion: {
     div: ({ children, className }: { children: React.ReactNode, className?: string }) => <div className={className}>{children}</div>,
   },
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Mock fetch
@@ -21,22 +22,22 @@ describe('Assistant Page', () => {
 
   it('16. renders the assistant UI correctly', () => {
     render(<AssistantPage />);
-    expect(screen.getByText('AI Assistant')).toBeInTheDocument();
-    expect(screen.getByText('Powered by Gemini AI')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Ask a question...')).toBeInTheDocument();
+    expect(screen.getByText('Election AI Assistant')).toBeInTheDocument();
+    expect(screen.getByText('Powered by Google Gemini AI')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Ask a question about elections...')).toBeInTheDocument();
   });
 
   it('17. allows user to type a message', () => {
     render(<AssistantPage />);
-    const input = screen.getByPlaceholderText('Ask a question...');
+    const input = screen.getByPlaceholderText('Ask a question about elections...');
     fireEvent.change(input, { target: { value: 'How do I vote?' } });
     expect(input).toHaveValue('How do I vote?');
   });
 
   it('18. sends message and displays response', async () => {
     render(<AssistantPage />);
-    const input = screen.getByPlaceholderText('Ask a question...');
-    const form = input.closest('form');
+    const input = screen.getByPlaceholderText('Ask a question about elections...');
+    const form = screen.getByLabelText('Send message').closest('form');
     
     fireEvent.change(input, { target: { value: 'How do I vote?' } });
     if (form) {

@@ -1,13 +1,21 @@
 import { NextResponse } from 'next/server';
 import { getGeminiModel } from '@/lib/google-services';
+import { z } from 'zod';
+
+const promptSchema = z.object({
+  prompt: z.string().min(2).max(1000),
+});
 
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json();
+    const body = await req.json();
+    const result_val = promptSchema.safeParse(body);
 
-    if (!prompt) {
-      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+    if (!result_val.success) {
+      return NextResponse.json({ error: 'Invalid prompt. Must be between 2 and 1000 characters.' }, { status: 400 });
     }
+
+    const { prompt } = result_val.data;
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey || apiKey === 'demo' || apiKey === 'mock-gemini-key') {
